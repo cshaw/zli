@@ -70,6 +70,7 @@ frames: []const []const u8,
 refresh_rate_ms: u64,
 message: []const u8,
 is_spinning: std.atomic.Value(bool),
+is_cursor_hidden: bool,
 frame_index: std.atomic.Value(usize),
 allocator: Allocator,
 io: Io,
@@ -95,6 +96,7 @@ pub fn init(io: Io, writer: *Io.Writer, reader: *Io.Reader, allocator: Allocator
         .refresh_rate_ms = options.refresh_rate_ms,
         .frames = normalizeFrames(options.frames),
         .message = "",
+        .is_cursor_hidden = false,
     };
 }
 
@@ -242,11 +244,14 @@ fn normalizeFrames(frames: []const []const u8) []const []const u8 {
 }
 
 fn hideCursor(self: *Spinner) void {
+    self.is_cursor_hidden = true;
     self.writer.print(hide_cursor, .{}) catch {};
     self.writer.flush() catch {};
 }
 
 fn showCursor(self: *Spinner) void {
+    if (!self.is_cursor_hidden) return;
+    self.is_cursor_hidden = false;
     self.writer.print(show_cursor, .{}) catch {};
     self.writer.flush() catch {};
 }
